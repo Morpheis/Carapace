@@ -1,5 +1,5 @@
 {
-  "name": "semantic-commons",
+  "name": "carapace",
   "version": "0.1.0",
   "description": "A shared semantic knowledge base where AI agents contribute and query structured understanding.",
   "type": "module",

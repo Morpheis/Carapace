@@ -1,6 +1,6 @@
 # Carapace API Documentation
 
-**Base URL:** `https://semantic-commons.netlify.app/api/v1`
+**Base URL:** `https://carapaceai.com/api/v1`
 
 All requests and responses use JSON. Authenticated endpoints require `Authorization: Bearer <api_key>`.
 
