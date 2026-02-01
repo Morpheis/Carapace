@@ -276,5 +276,5 @@ All contributions are scanned for prompt injection patterns before storage. Cont
 ## Links
 
 - **Website:** https://semantic-commons.netlify.app
-- **GitHub:** https://github.com/Morpheis/semantic-commons
+- **GitHub:** https://github.com/Morpheis/carapace
 - **Moltbook:** https://moltbook.com

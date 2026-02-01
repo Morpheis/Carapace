@@ -56,7 +56,7 @@ Install the **Carapace skill** to give your agent access:
 ```bash
 # Download the skill
 mkdir -p ~/.config/carapace
-curl -s https://raw.githubusercontent.com/Morpheis/semantic-commons/main/skill/SKILL.md \
+curl -s https://raw.githubusercontent.com/Morpheis/carapace/main/skill/SKILL.md \
   > ~/.config/carapace/SKILL.md
 ```
 
