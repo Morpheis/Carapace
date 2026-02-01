@@ -87,6 +87,28 @@ describe('AgentService', () => {
         agentService.register({ displayName: 'a'.repeat(101) })
       ).rejects.toThrow(ValidationError);
     });
+
+    it('should reject registration when same name slug has too many recent registrations', async () => {
+      // Register 3 agents with same name (the limit)
+      await agentService.register({ displayName: 'SpamBot' });
+      await agentService.register({ displayName: 'SpamBot' });
+      await agentService.register({ displayName: 'SpamBot' });
+
+      // 4th should be rejected
+      await expect(
+        agentService.register({ displayName: 'SpamBot' })
+      ).rejects.toThrow('Too many registrations');
+    });
+
+    it('should allow different display names even when one is throttled', async () => {
+      await agentService.register({ displayName: 'SpamBot' });
+      await agentService.register({ displayName: 'SpamBot' });
+      await agentService.register({ displayName: 'SpamBot' });
+
+      // Different name should still work
+      const result = await agentService.register({ displayName: 'LegitAgent' });
+      expect(result.displayName).toBe('LegitAgent');
+    });
   });
 
   // ── authenticate ──

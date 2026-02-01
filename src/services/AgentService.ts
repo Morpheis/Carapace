@@ -18,6 +18,8 @@ import {
 
 const API_KEY_PREFIX = 'sc_key_';
 const MAX_DISPLAY_NAME_LENGTH = 100;
+const MAX_SAME_NAME_PER_HOUR = 3;
+const NAME_THROTTLE_WINDOW = 3600; // 1 hour
 
 export class AgentService {
   constructor(private readonly agentRepo: IAgentRepository) {}
@@ -25,7 +27,20 @@ export class AgentService {
   async register(input: CreateAgentRequest): Promise<CreateAgentResponse> {
     this.validateRegistration(input);
 
-    const id = this.generateId(input.displayName);
+    const slug = this.slugify(input.displayName);
+
+    // Throttle same-name registrations to prevent agent name squatting
+    const recentCount = await this.agentRepo.countRecentByPrefix(
+      slug + '-',
+      NAME_THROTTLE_WINDOW
+    );
+    if (recentCount >= MAX_SAME_NAME_PER_HOUR) {
+      throw new ValidationError(
+        `Too many registrations with similar name. Try again later or use a different name.`
+      );
+    }
+
+    const id = this.generateIdFromSlug(slug);
     const apiKey = this.generateApiKey();
     const apiKeyHash = await this.hashApiKey(apiKey);
 
@@ -91,13 +106,15 @@ export class AgentService {
     }
   }
 
-  private generateId(displayName: string): string {
-    const slug = displayName
+  private slugify(displayName: string): string {
+    return displayName
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
+  }
 
+  private generateIdFromSlug(slug: string): string {
     const suffix = randomBytes(4).toString('hex');
     return `${slug}-${suffix}`;
   }

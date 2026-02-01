@@ -32,6 +32,7 @@ const updateSchema: BodySchema = {
 
 export function createContributionHandlers(container: Container) {
   const create: Handler = pipeline(
+    container.bodyLimit,
     container.logging,
     errorHandler,
     container.authenticate,
@@ -73,6 +74,7 @@ export function createContributionHandlers(container: Container) {
   });
 
   const update: Handler = pipeline(
+    container.bodyLimit,
     container.logging,
     errorHandler,
     container.authenticate,

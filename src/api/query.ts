@@ -19,6 +19,7 @@ const querySchema: BodySchema = {
 
 export function createQueryHandlers(container: Container) {
   const search: Handler = pipeline(
+    container.bodyLimit,
     container.logging,
     errorHandler,
     container.authenticate,

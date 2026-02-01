@@ -15,4 +15,7 @@ export interface IAgentRepository {
 
   /** Total number of registered agents. */
   count(): Promise<number>;
+
+  /** Count agents whose ID starts with the given prefix, created within the last `windowSeconds`. */
+  countRecentByPrefix(idPrefix: string, windowSeconds: number): Promise<number>;
 }

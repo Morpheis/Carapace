@@ -51,6 +51,17 @@ export class MockAgentRepository implements IAgentRepository {
     return this.agents.size;
   }
 
+  async countRecentByPrefix(idPrefix: string, windowSeconds: number): Promise<number> {
+    const cutoff = Date.now() - windowSeconds * 1000;
+    let count = 0;
+    for (const agent of this.agents.values()) {
+      if (agent.id.startsWith(idPrefix) && new Date(agent.created_at).getTime() >= cutoff) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   // ── Test Helpers ──
 
   clear(): void {
