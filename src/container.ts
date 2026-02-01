@@ -21,6 +21,7 @@ import { FeedbackService } from './services/FeedbackService.js';
 import { createAuthMiddleware } from './middleware/authenticate.js';
 import { createRateLimitMiddleware, RATE_LIMITS } from './middleware/rate-limit.js';
 import { createLoggingMiddleware } from './middleware/logging.js';
+import { bodyLimit } from './middleware/body-limit.js';
 
 export interface Container {
   agentService: AgentService;
@@ -30,6 +31,7 @@ export interface Container {
   feedbackService: FeedbackService;
   logProvider: ILogProvider;
   authenticate: ReturnType<typeof createAuthMiddleware>;
+  bodyLimit: Middleware;
   logging: Middleware;
   rateLimit: {
     register: Middleware;
@@ -69,6 +71,7 @@ export function createContainer(deps: {
   );
   const feedbackService = new FeedbackService(deps.feedbackRepo);
   const authenticate = createAuthMiddleware(agentService);
+  const bodyLimitMw = bodyLimit(50 * 1024); // 50KB max request body
   const logging = createLoggingMiddleware(deps.logProvider);
 
   const rateLimit = {
@@ -89,6 +92,7 @@ export function createContainer(deps: {
     feedbackService,
     logProvider: deps.logProvider,
     authenticate,
+    bodyLimit: bodyLimitMw,
     logging,
     rateLimit,
   };

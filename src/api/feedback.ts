@@ -19,6 +19,7 @@ const feedbackSchema: BodySchema = {
 
 export function createFeedbackHandlers(container: Container) {
   const submit: Handler = pipeline(
+    container.bodyLimit,
     container.logging,
     errorHandler,
     container.authenticate,

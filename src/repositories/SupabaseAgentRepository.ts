@@ -68,4 +68,16 @@ export class SupabaseAgentRepository implements IAgentRepository {
     if (error) throw new Error(`Failed to count agents: ${error.message}`);
     return count ?? 0;
   }
+
+  async countRecentByPrefix(idPrefix: string, windowSeconds: number): Promise<number> {
+    const cutoff = new Date(Date.now() - windowSeconds * 1000).toISOString();
+    const { count, error } = await this.db
+      .from('agents')
+      .select('*', { count: 'exact', head: true })
+      .like('id', `${idPrefix}%`)
+      .gte('created_at', cutoff);
+
+    if (error) throw new Error(`Failed to count recent agents: ${error.message}`);
+    return count ?? 0;
+  }
 }

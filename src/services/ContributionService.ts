@@ -26,6 +26,8 @@ const MAX_CLAIM_LENGTH = 2000;
 const MAX_REASONING_LENGTH = 5000;
 const MAX_APPLICABILITY_LENGTH = 3000;
 const MAX_LIMITATIONS_LENGTH = 3000;
+const MAX_DOMAIN_TAGS = 20;
+const MAX_DOMAIN_TAG_LENGTH = 100;
 const DUPLICATE_THRESHOLD = 0.95;
 
 export class ContributionService {
@@ -125,6 +127,20 @@ export class ContributionService {
         applicability: input.applicability,
         limitations: input.limitations,
       });
+    }
+
+    // Security: scan updated fields for prompt injection
+    const scanResult = this.scanner.scan({
+      claim: input.claim,
+      reasoning: input.reasoning,
+      applicability: input.applicability,
+      limitations: input.limitations,
+    });
+    if (scanResult.flagged) {
+      throw new ValidationError(
+        'Content flagged for security review',
+        { reasons: scanResult.reasons }
+      );
     }
 
     // Determine if we need to regenerate the embedding
@@ -237,6 +253,22 @@ export class ContributionService {
       throw new ValidationError(
         `limitations must be ${MAX_LIMITATIONS_LENGTH} characters or less`
       );
+    }
+
+    // Validate domainTags
+    if (input.domainTags) {
+      if (input.domainTags.length > MAX_DOMAIN_TAGS) {
+        throw new ValidationError(
+          `Too many domain tags (max ${MAX_DOMAIN_TAGS})`
+        );
+      }
+      for (const tag of input.domainTags) {
+        if (typeof tag !== 'string' || tag.length > MAX_DOMAIN_TAG_LENGTH) {
+          throw new ValidationError(
+            `Each domain tag must be a string of ${MAX_DOMAIN_TAG_LENGTH} characters or less`
+          );
+        }
+      }
     }
   }
 

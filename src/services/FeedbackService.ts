@@ -11,6 +11,7 @@ const VALID_CATEGORIES: FeedbackCategory[] = ['bug', 'feature', 'quality', 'usab
 const VALID_SEVERITIES: FeedbackSeverity[] = ['low', 'medium', 'high'];
 const MAX_MESSAGE_LENGTH = 5000;
 const MAX_ENDPOINT_LENGTH = 200;
+const MAX_CONTEXT_BYTES = 10_240; // 10KB
 
 export interface SubmitFeedbackInput {
   message: string;
@@ -51,6 +52,16 @@ export class FeedbackService {
       throw new ValidationError(
         `Endpoint exceeds maximum length of ${MAX_ENDPOINT_LENGTH} characters`
       );
+    }
+
+    // Validate context size (optional)
+    if (input.context) {
+      const contextSize = JSON.stringify(input.context).length;
+      if (contextSize > MAX_CONTEXT_BYTES) {
+        throw new ValidationError(
+          `Context exceeds maximum size of ${Math.round(MAX_CONTEXT_BYTES / 1024)}KB`
+        );
+      }
     }
 
     return this.feedbackRepo.create({

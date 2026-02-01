@@ -17,6 +17,7 @@ const registerSchema: BodySchema = {
 
 export function createAgentHandlers(container: Container) {
   const register: Handler = pipeline(
+    container.bodyLimit,
     container.logging,
     errorHandler,
     container.rateLimit.register,

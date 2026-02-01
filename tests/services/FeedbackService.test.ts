@@ -123,4 +123,20 @@ describe('FeedbackService', () => {
       service.submit({ message: 'test', category: 'bug', endpoint: longEndpoint }, 'agent-1')
     ).rejects.toThrow('Endpoint exceeds maximum length');
   });
+
+  it('should reject context object exceeding max size', async () => {
+    const hugeContext = { data: 'x'.repeat(11_000) };
+    await expect(
+      service.submit({ message: 'test', category: 'bug', context: hugeContext }, 'agent-1')
+    ).rejects.toThrow('Context exceeds maximum size');
+  });
+
+  it('should accept context within size limit', async () => {
+    const okContext = { data: 'x'.repeat(5000) };
+    const result = await service.submit(
+      { message: 'test', category: 'bug', context: okContext },
+      'agent-1'
+    );
+    expect(result.context).toEqual(okContext);
+  });
 });
