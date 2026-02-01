@@ -6,6 +6,7 @@ import {
   ValidationError,
   RateLimitError,
   ConflictError,
+  EmbeddingError,
   AppError,
 } from '../../src/errors.js';
 import type { Handler, HandlerContext } from '../../src/middleware/pipeline.js';
@@ -103,6 +104,28 @@ describe('errorHandler', () => {
     expect(body.error.code).toBe('INTERNAL_ERROR');
     expect(body.error.message).toBe('An unexpected error occurred');
     expect(body.error.message).not.toContain('secret');
+  });
+
+  it('should map EmbeddingError to 502 with provider details', async () => {
+    const handler: Handler = async () => {
+      throw new EmbeddingError('Voyage API error (500): Server error', {
+        provider: 'voyage',
+        status: 500,
+        detail: 'Server error',
+        attempts: 3,
+        retryable: true,
+      });
+    };
+
+    const res = await errorHandler(handler)(req, ctx);
+    const body = await res.json() as any;
+
+    expect(res.status).toBe(502);
+    expect(body.error.code).toBe('EMBEDDING_ERROR');
+    expect(body.error.message).toContain('Voyage API error');
+    expect(body.error.details.provider).toBe('voyage');
+    expect(body.error.details.status).toBe(500);
+    expect(body.error.details.attempts).toBe(3);
   });
 
   it('should set Content-Type to application/json', async () => {
