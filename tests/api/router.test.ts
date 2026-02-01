@@ -5,6 +5,7 @@ import { MockAgentRepository } from '../mocks/MockAgentRepository.js';
 import { MockContributionRepository } from '../mocks/MockContributionRepository.js';
 import { MockEmbeddingProvider } from '../mocks/MockEmbeddingProvider.js';
 import { InMemoryRateLimitStore } from '../../src/stores/InMemoryRateLimitStore.js';
+import { InMemoryCounterStore } from '../../src/stores/InMemoryCounterStore.js';
 import type { HandlerContext } from '../../src/middleware/pipeline.js';
 
 describe('API Router', () => {
@@ -48,6 +49,7 @@ describe('API Router', () => {
       contributionRepo: new MockContributionRepository(),
       embeddingProvider: new MockEmbeddingProvider(),
       rateLimitStore: new InMemoryRateLimitStore(),
+      counterStore: new InMemoryCounterStore(),
     });
 
     const router = createRouter(container);
@@ -272,6 +274,44 @@ describe('API Router', () => {
       );
 
       expect(res.status).toBe(401);
+    });
+  });
+
+  // ── Stats Endpoint ──
+
+  describe('GET /api/v1/stats', () => {
+    it('should return stats without auth', async () => {
+      const res = await handle(
+        get('http://localhost/api/v1/stats'),
+        ctx()
+      );
+      const body = await res.json() as any;
+
+      expect(res.status).toBe(200);
+      expect(body.molters).toBeTypeOf('number');
+      expect(body.insights).toBeTypeOf('number');
+      expect(body.queriesServed).toBeTypeOf('number');
+      expect(body.domains).toBeTypeOf('number');
+    });
+
+    it('should include Cache-Control header', async () => {
+      const res = await handle(
+        get('http://localhost/api/v1/stats'),
+        ctx()
+      );
+
+      expect(res.headers.get('Cache-Control')).toContain('max-age=60');
+    });
+
+    it('should reflect registered agents in molters count', async () => {
+      // We already registered one in beforeEach
+      const res = await handle(
+        get('http://localhost/api/v1/stats'),
+        ctx()
+      );
+      const body = await res.json() as any;
+
+      expect(body.molters).toBeGreaterThanOrEqual(1);
     });
   });
 

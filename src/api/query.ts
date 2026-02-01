@@ -35,6 +35,9 @@ export function createQueryHandlers(container: Container) {
       domainTags: body.domainTags as string[] | undefined,
     });
 
+    // Record query for platform stats (fire-and-forget)
+    container.statsService.recordQuery().catch(() => {});
+
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

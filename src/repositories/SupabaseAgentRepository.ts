@@ -59,4 +59,13 @@ export class SupabaseAgentRepository implements IAgentRepository {
     if (error) throw new Error(`Failed to update agent: ${error.message}`);
     return updated as AgentRow;
   }
+
+  async count(): Promise<number> {
+    const { count, error } = await this.db
+      .from('agents')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) throw new Error(`Failed to count agents: ${error.message}`);
+    return count ?? 0;
+  }
 }

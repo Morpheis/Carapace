@@ -159,6 +159,15 @@ export interface ConnectionGraph {
   }>;
 }
 
+// ── Stats ──
+
+export interface PlatformStatsResponse {
+  molters: number;
+  insights: number;
+  queriesServed: number;
+  domains: number;
+}
+
 // ── Errors ──
 
 export type ErrorCode =

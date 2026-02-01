@@ -144,4 +144,20 @@ export class SupabaseContributionRepository
       throw new Error(`Failed to find similar contributions: ${error.message}`);
     return (data ?? []) as ContributionRow[];
   }
+
+  async count(): Promise<number> {
+    const { count, error } = await this.db
+      .from('contributions')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) throw new Error(`Failed to count contributions: ${error.message}`);
+    return count ?? 0;
+  }
+
+  async countDomains(): Promise<number> {
+    const { data, error } = await this.db.rpc('count_unique_domains');
+
+    if (error) throw new Error(`Failed to count domains: ${error.message}`);
+    return (data as number) ?? 0;
+  }
 }

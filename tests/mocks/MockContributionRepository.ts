@@ -125,15 +125,25 @@ export class MockContributionRepository implements IContributionRepository {
     });
   }
 
+  async count(): Promise<number> {
+    return this.contributions.size;
+  }
+
+  async countDomains(): Promise<number> {
+    const domains = new Set<string>();
+    for (const c of this.contributions.values()) {
+      for (const tag of c.domain_tags) {
+        domains.add(tag);
+      }
+    }
+    return domains.size;
+  }
+
   // ── Test Helpers ──
 
   clear(): void {
     this.contributions.clear();
     this.nextId = 1;
-  }
-
-  count(): number {
-    return this.contributions.size;
   }
 
   getAll(): ContributionRow[] {

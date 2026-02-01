@@ -9,6 +9,7 @@ import type { Handler, HandlerContext } from '../middleware/pipeline.js';
 import { createAgentHandlers } from './agents.js';
 import { createContributionHandlers } from './contributions.js';
 import { createQueryHandlers } from './query.js';
+import { createStatsHandlers } from './stats.js';
 
 interface Route {
   method: string;
@@ -20,6 +21,7 @@ export function createRouter(container: Container) {
   const agents = createAgentHandlers(container);
   const contributions = createContributionHandlers(container);
   const query = createQueryHandlers(container);
+  const stats = createStatsHandlers(container);
 
   const routes: Route[] = [
     // Agents
@@ -34,6 +36,9 @@ export function createRouter(container: Container) {
 
     // Query
     { method: 'POST', pattern: /^\/api\/v1\/query\/?$/, handler: query.search },
+
+    // Stats
+    { method: 'GET', pattern: /^\/api\/v1\/stats\/?$/, handler: stats.getStats },
   ];
 
   const handle: Handler = async (req: Request, ctx: HandlerContext) => {

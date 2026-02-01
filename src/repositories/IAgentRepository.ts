@@ -12,4 +12,7 @@ export interface IAgentRepository {
   findByApiKeyHash(hash: string): Promise<AgentRow | null>;
 
   update(id: string, data: Partial<AgentRow>): Promise<AgentRow>;
+
+  /** Total number of registered agents. */
+  count(): Promise<number>;
 }

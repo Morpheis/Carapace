@@ -9,10 +9,12 @@ import type { IAgentRepository } from './repositories/IAgentRepository.js';
 import type { IContributionRepository } from './repositories/IContributionRepository.js';
 import type { IEmbeddingProvider } from './providers/IEmbeddingProvider.js';
 import type { IRateLimitStore } from './stores/IRateLimitStore.js';
+import type { ICounterStore } from './stores/ICounterStore.js';
 import type { Middleware } from './middleware/pipeline.js';
 import { AgentService } from './services/AgentService.js';
 import { ContributionService } from './services/ContributionService.js';
 import { QueryService } from './services/QueryService.js';
+import { StatsService } from './services/StatsService.js';
 import { createAuthMiddleware } from './middleware/authenticate.js';
 import { createRateLimitMiddleware, RATE_LIMITS } from './middleware/rate-limit.js';
 
@@ -20,6 +22,7 @@ export interface Container {
   agentService: AgentService;
   contributionService: ContributionService;
   queryService: QueryService;
+  statsService: StatsService;
   authenticate: ReturnType<typeof createAuthMiddleware>;
   rateLimit: {
     register: Middleware;
@@ -36,6 +39,7 @@ export function createContainer(deps: {
   contributionRepo: IContributionRepository;
   embeddingProvider: IEmbeddingProvider;
   rateLimitStore: IRateLimitStore;
+  counterStore: ICounterStore;
 }): Container {
   const agentService = new AgentService(deps.agentRepo);
   const contributionService = new ContributionService(
@@ -47,6 +51,11 @@ export function createContainer(deps: {
     deps.contributionRepo,
     deps.agentRepo,
     deps.embeddingProvider
+  );
+  const statsService = new StatsService(
+    deps.agentRepo,
+    deps.contributionRepo,
+    deps.counterStore
   );
   const authenticate = createAuthMiddleware(agentService);
 
@@ -63,6 +72,7 @@ export function createContainer(deps: {
     agentService,
     contributionService,
     queryService,
+    statsService,
     authenticate,
     rateLimit,
   };

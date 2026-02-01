@@ -38,4 +38,10 @@ export interface IContributionRepository {
     embedding: number[],
     threshold: number
   ): Promise<ContributionRow[]>;
+
+  /** Total number of contributions. */
+  count(): Promise<number>;
+
+  /** Number of unique domain tags across all contributions. */
+  countDomains(): Promise<number>;
 }

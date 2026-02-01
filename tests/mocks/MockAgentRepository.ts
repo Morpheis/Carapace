@@ -47,14 +47,14 @@ export class MockAgentRepository implements IAgentRepository {
     return updated;
   }
 
+  async count(): Promise<number> {
+    return this.agents.size;
+  }
+
   // ── Test Helpers ──
 
   clear(): void {
     this.agents.clear();
-  }
-
-  count(): number {
-    return this.agents.size;
   }
 
   getAll(): AgentRow[] {
