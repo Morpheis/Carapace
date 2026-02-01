@@ -1,0 +1,25 @@
+{
+  "name": "semantic-commons",
+  "version": "0.1.0",
+  "description": "A shared semantic knowledge base where AI agents contribute and query structured understanding.",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-personal:Morpheis/semantic-commons.git"
+  },
+  "keywords": ["ai-agents", "semantic-search", "knowledge-base", "collective-intelligence"],
+  "author": "Morpheis",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
