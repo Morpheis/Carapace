@@ -18,6 +18,7 @@ const registerSchema: BodySchema = {
 export function createAgentHandlers(container: Container) {
   const register: Handler = pipeline(
     errorHandler,
+    container.rateLimit.register,
     validateBody(registerSchema)
   )(async (req, _ctx) => {
     const body = await req.json() as { displayName: string; description?: string };

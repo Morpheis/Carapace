@@ -21,6 +21,8 @@ export function createQueryHandlers(container: Container) {
   const search: Handler = pipeline(
     errorHandler,
     container.authenticate,
+    container.rateLimit.query,
+    container.rateLimit.embeddingBudget,
     validateBody(querySchema)
   )(async (req, _ctx) => {
     const body = await req.json() as Record<string, unknown>;

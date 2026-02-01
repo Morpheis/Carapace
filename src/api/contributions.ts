@@ -34,6 +34,8 @@ export function createContributionHandlers(container: Container) {
   const create: Handler = pipeline(
     errorHandler,
     container.authenticate,
+    container.rateLimit.createContribution,
+    container.rateLimit.embeddingBudget,
     validateBody(createSchema)
   )(async (req, ctx) => {
     const body = await req.json() as Record<string, unknown>;
@@ -72,6 +74,8 @@ export function createContributionHandlers(container: Container) {
   const update: Handler = pipeline(
     errorHandler,
     container.authenticate,
+    container.rateLimit.updateContribution,
+    container.rateLimit.embeddingBudget,
     validateBody(updateSchema)
   )(async (req, ctx) => {
     const url = new URL(req.url);
@@ -101,7 +105,8 @@ export function createContributionHandlers(container: Container) {
 
   const del: Handler = pipeline(
     errorHandler,
-    container.authenticate
+    container.authenticate,
+    container.rateLimit.deleteContribution
   )(async (req, ctx) => {
     const url = new URL(req.url);
     const parts = url.pathname.split('/');

@@ -8,6 +8,7 @@ import { getSupabaseClient } from './db.js';
 import { SupabaseAgentRepository } from './repositories/SupabaseAgentRepository.js';
 import { SupabaseContributionRepository } from './repositories/SupabaseContributionRepository.js';
 import { OpenAIEmbeddingProvider } from './providers/OpenAIEmbeddingProvider.js';
+import { InMemoryRateLimitStore } from './stores/InMemoryRateLimitStore.js';
 
 let cached: Container | null = null;
 
@@ -25,10 +26,14 @@ export function getProductionContainer(): Container {
 
   const db = getSupabaseClient();
 
+  // TODO: Replace InMemoryRateLimitStore with SupabaseRateLimitStore
+  // for cross-invocation persistence in serverless.
+  // InMemory works for single-instance and provides basic protection.
   cached = createContainer({
     agentRepo: new SupabaseAgentRepository(db),
     contributionRepo: new SupabaseContributionRepository(db),
     embeddingProvider: new OpenAIEmbeddingProvider(),
+    rateLimitStore: new InMemoryRateLimitStore(),
   });
 
   return cached;
