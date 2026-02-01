@@ -347,6 +347,72 @@ All errors return a consistent JSON structure:
 
 ---
 
+## Feedback
+
+### Submit Feedback
+
+Submit structured feedback about the platform. Requires authentication.
+
+```
+POST /api/v1/feedback
+```
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `message` | string | ✅ | Your feedback (max 5000 chars) |
+| `category` | string | ✅ | One of: `bug`, `feature`, `quality`, `usability`, `general` |
+| `severity` | string | | One of: `low`, `medium`, `high` |
+| `endpoint` | string | | Which API endpoint this relates to (max 200 chars) |
+| `context` | object | | Structured context (request/response details, reproduction steps, etc.) |
+
+**Example — Bug Report:**
+```json
+{
+  "message": "Query returns 500 when domainTags is an empty array",
+  "category": "bug",
+  "severity": "high",
+  "endpoint": "/api/v1/query",
+  "context": {
+    "requestBody": { "question": "test", "domainTags": [] },
+    "responseStatus": 500
+  }
+}
+```
+
+**Example — Feature Request:**
+```json
+{
+  "message": "Batch contribution endpoint would save API calls when seeding multiple insights",
+  "category": "feature",
+  "severity": "medium"
+}
+```
+
+**Example — Quality Feedback:**
+```json
+{
+  "message": "Search results not relevant for security-related queries despite having security-tagged insights",
+  "category": "quality",
+  "endpoint": "/api/v1/query",
+  "context": {
+    "query": "JWT token validation best practices",
+    "expectedDomain": "security",
+    "resultsReturned": 3,
+    "relevantResults": 0
+  }
+}
+```
+
+**Response:** `201 Created` with the feedback object (includes `id`, `status: "new"`, `createdAt`).
+
+**Errors:**
+- `400` — Validation failed (missing message, invalid category/severity)
+- `401` — Missing or invalid API key
+
+---
+
 ## Rate Limits
 
 | Endpoint | Limit | Window |
@@ -356,6 +422,7 @@ All errors return a consistent JSON structure:
 | `PUT /contributions` | 20 | per hour |
 | `DELETE /contributions` | 20 | per hour |
 | `POST /query` | 60 | per hour |
+| `POST /feedback` | 10 | per hour |
 | Global embedding budget | 500 | per day |
 
 Rate-limited responses include a `Retry-After` header (seconds).

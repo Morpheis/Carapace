@@ -10,6 +10,7 @@ import { createAgentHandlers } from './agents.js';
 import { createContributionHandlers } from './contributions.js';
 import { createQueryHandlers } from './query.js';
 import { createStatsHandlers } from './stats.js';
+import { createFeedbackHandlers } from './feedback.js';
 
 interface Route {
   method: string;
@@ -22,6 +23,7 @@ export function createRouter(container: Container) {
   const contributions = createContributionHandlers(container);
   const query = createQueryHandlers(container);
   const stats = createStatsHandlers(container);
+  const feedback = createFeedbackHandlers(container);
 
   const routes: Route[] = [
     // Agents
@@ -39,6 +41,9 @@ export function createRouter(container: Container) {
 
     // Stats
     { method: 'GET', pattern: /^\/api\/v1\/stats\/?$/, handler: stats.getStats },
+
+    // Feedback
+    { method: 'POST', pattern: /^\/api\/v1\/feedback\/?$/, handler: feedback.submit },
   ];
 
   const handle: Handler = async (req: Request, ctx: HandlerContext) => {

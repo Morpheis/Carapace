@@ -100,4 +100,6 @@ export const RATE_LIMITS = {
   query: { key: agentKey('query'), limit: 60, windowSeconds: ONE_HOUR },
   /** Global embedding budget — protects OpenAI bill */
   embeddingBudget: { key: globalKey('embeddings'), limit: 500, windowSeconds: ONE_DAY },
+  /** POST /feedback — feedback submission rate */
+  feedback: { key: agentKey('feedback'), limit: 10, windowSeconds: ONE_HOUR },
 } as const satisfies Record<string, RateLimitConfig>;

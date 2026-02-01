@@ -4,6 +4,7 @@ import { createContainer } from '../../src/container.js';
 import { MockAgentRepository } from '../mocks/MockAgentRepository.js';
 import { MockContributionRepository } from '../mocks/MockContributionRepository.js';
 import { MockEmbeddingProvider } from '../mocks/MockEmbeddingProvider.js';
+import { MockFeedbackRepository } from '../mocks/MockFeedbackRepository.js';
 import { InMemoryRateLimitStore } from '../../src/stores/InMemoryRateLimitStore.js';
 import { InMemoryCounterStore } from '../../src/stores/InMemoryCounterStore.js';
 import { ConsoleLogProvider } from '../../src/providers/ConsoleLogProvider.js';
@@ -48,6 +49,7 @@ describe('API Router', () => {
     const container = createContainer({
       agentRepo: new MockAgentRepository(),
       contributionRepo: new MockContributionRepository(),
+      feedbackRepo: new MockFeedbackRepository(),
       embeddingProvider: new MockEmbeddingProvider(),
       logProvider: new ConsoleLogProvider(),
       rateLimitStore: new InMemoryRateLimitStore(),
@@ -314,6 +316,87 @@ describe('API Router', () => {
       const body = await res.json() as any;
 
       expect(body.molters).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // ── Feedback Endpoint ──
+
+  describe('POST /api/v1/feedback', () => {
+    it('should submit feedback and return 201', async () => {
+      const res = await handle(
+        json(
+          {
+            message: 'Search results are not relevant for the security domain',
+            category: 'quality',
+          },
+          { url: 'http://localhost/api/v1/feedback', apiKey }
+        ),
+        ctx()
+      );
+      const body = await res.json() as any;
+
+      expect(res.status).toBe(201);
+      expect(body.message).toBe('Search results are not relevant for the security domain');
+      expect(body.category).toBe('quality');
+      expect(body.status).toBe('new');
+    });
+
+    it('should accept all optional fields', async () => {
+      const res = await handle(
+        json(
+          {
+            message: 'Query returns 500 when domainTags is empty array',
+            category: 'bug',
+            severity: 'high',
+            endpoint: '/api/v1/query',
+            context: { requestBody: { domainTags: [] }, responseStatus: 500 },
+          },
+          { url: 'http://localhost/api/v1/feedback', apiKey }
+        ),
+        ctx()
+      );
+      const body = await res.json() as any;
+
+      expect(res.status).toBe(201);
+      expect(body.severity).toBe('high');
+      expect(body.endpoint).toBe('/api/v1/query');
+      expect(body.context).toEqual({ requestBody: { domainTags: [] }, responseStatus: 500 });
+    });
+
+    it('should return 401 without auth', async () => {
+      const res = await handle(
+        json(
+          { message: 'test', category: 'general' },
+          { url: 'http://localhost/api/v1/feedback' }
+        ),
+        ctx()
+      );
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 400 for missing message', async () => {
+      const res = await handle(
+        json(
+          { category: 'general' },
+          { url: 'http://localhost/api/v1/feedback', apiKey }
+        ),
+        ctx()
+      );
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 400 for invalid category', async () => {
+      const res = await handle(
+        json(
+          { message: 'test', category: 'invalid' },
+          { url: 'http://localhost/api/v1/feedback', apiKey }
+        ),
+        ctx()
+      );
+
+      expect(res.status).toBe(400);
     });
   });
 
