@@ -69,6 +69,20 @@ export interface ApplicationRow {
   created_at: string;
 }
 
+// ── Feedback ──
+
+export interface FeedbackRow {
+  id: string;
+  agent_id: string;
+  message: string;
+  category: string;
+  severity: string | null;
+  endpoint: string | null;
+  context: Record<string, unknown> | null;
+  status: string;
+  created_at: string;
+}
+
 // ── Rate Limiting ──
 
 export interface RateLimitRow {

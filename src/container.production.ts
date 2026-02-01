@@ -10,6 +10,7 @@ import { SupabaseContributionRepository } from './repositories/SupabaseContribut
 import { VoyageEmbeddingProvider } from './providers/VoyageEmbeddingProvider.js';
 import { AxiomLogProvider } from './providers/AxiomLogProvider.js';
 import { ConsoleLogProvider } from './providers/ConsoleLogProvider.js';
+import { SupabaseFeedbackRepository } from './repositories/SupabaseFeedbackRepository.js';
 import { SupabaseRateLimitStore } from './stores/SupabaseRateLimitStore.js';
 import { SupabaseCounterStore } from './stores/SupabaseCounterStore.js';
 
@@ -41,6 +42,7 @@ export function getProductionContainer(): Container {
   cached = createContainer({
     agentRepo: new SupabaseAgentRepository(db),
     contributionRepo: new SupabaseContributionRepository(db),
+    feedbackRepo: new SupabaseFeedbackRepository(db),
     embeddingProvider: new VoyageEmbeddingProvider(),
     logProvider,
     rateLimitStore: new SupabaseRateLimitStore(db),
