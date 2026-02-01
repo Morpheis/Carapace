@@ -2,13 +2,19 @@
  * Voyage AI embedding provider.
  * Uses the Voyage API (OpenAI-compatible format) for voyage-4-lite (1024 dimensions).
  * No SDK dependency — uses native fetch.
+ * Includes retry logic for transient errors (429, 500, 502, 503, 504).
  */
 
 import type { IEmbeddingProvider } from './IEmbeddingProvider.js';
+import { EmbeddingError } from '../errors.js';
 
 const API_URL = 'https://api.voyageai.com/v1/embeddings';
 const DEFAULT_MODEL = 'voyage-4-lite';
 const DEFAULT_DIMENSIONS = 1024;
+
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 2000;
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 
 interface VoyageEmbeddingData {
   object: string;
@@ -68,21 +74,64 @@ export class VoyageEmbeddingProvider implements IEmbeddingProvider {
       body.output_dimension = this.dimensions;
     }
 
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
+    let lastError: Error | null = null;
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const detail = (err as Record<string, unknown>).detail ?? 'Unknown error';
-      throw new Error(`Voyage API error (${res.status}): ${detail}`);
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * attempt));
+      }
+
+      let res: Response;
+      try {
+        res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify(body),
+        });
+      } catch (fetchErr) {
+        // Network-level error (DNS, timeout, etc.)
+        lastError = new EmbeddingError(
+          `Voyage API network error: ${(fetchErr as Error).message}`,
+          { provider: 'voyage', attempt: attempt + 1, type: 'network' }
+        );
+        continue;
+      }
+
+      if (res.ok) {
+        return (await res.json()) as VoyageEmbeddingResponse;
+      }
+
+      const errBody = await res.json().catch(() => ({})) as Record<string, unknown>;
+      const detail = errBody.detail ?? errBody.message ?? errBody.error ?? 'Unknown error';
+
+      if (RETRYABLE_STATUS_CODES.has(res.status) && attempt < MAX_RETRIES) {
+        lastError = new EmbeddingError(
+          `Voyage API error (${res.status}): ${detail}`,
+          { provider: 'voyage', status: res.status, detail, attempt: attempt + 1 }
+        );
+        continue;
+      }
+
+      // Non-retryable or final attempt — throw immediately
+      throw new EmbeddingError(
+        `Voyage API error (${res.status}): ${detail}`,
+        {
+          provider: 'voyage',
+          status: res.status,
+          detail,
+          attempts: attempt + 1,
+          retryable: RETRYABLE_STATUS_CODES.has(res.status),
+        }
+      );
     }
 
-    return (await res.json()) as VoyageEmbeddingResponse;
+    // All retries exhausted
+    throw lastError ?? new EmbeddingError('Voyage API failed after retries', {
+      provider: 'voyage',
+      attempts: MAX_RETRIES + 1,
+    });
   }
 }

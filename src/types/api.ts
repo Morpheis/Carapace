@@ -179,6 +179,7 @@ export type ErrorCode =
   | 'RATE_LIMITED'
   | 'DUPLICATE_CONTRIBUTION'
   | 'SELF_VALIDATION'
+  | 'EMBEDDING_ERROR'
   | 'INTERNAL_ERROR';
 
 export interface ApiErrorResponse {

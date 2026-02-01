@@ -58,3 +58,13 @@ export class ValidationError extends AppError {
     this.name = 'ValidationError';
   }
 }
+
+export class EmbeddingError extends AppError {
+  constructor(
+    message: string,
+    details?: Record<string, unknown>
+  ) {
+    super('EMBEDDING_ERROR', message, 502, details);
+    this.name = 'EmbeddingError';
+  }
+}

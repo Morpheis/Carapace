@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { VoyageEmbeddingProvider } from '../../src/providers/VoyageEmbeddingProvider.js';
+import { EmbeddingError } from '../../src/errors.js';
 
 // Mock global fetch
 const mockFetch = vi.fn();
@@ -119,13 +120,82 @@ describe('VoyageEmbeddingProvider', () => {
       expect(body.output_dimension).toBeUndefined();
     });
 
-    it('should throw on API error', async () => {
+    it('should throw EmbeddingError on non-retryable API error', async () => {
       mockFetch.mockResolvedValueOnce(errorResponse(401, 'Invalid API key'));
 
-      await expect(provider.generate('test')).rejects.toThrow(
-        'Voyage API error (401)'
-      );
+      try {
+        await provider.generate('test');
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(EmbeddingError);
+        expect((err as Error).message).toContain('Voyage API error (401)');
+      }
     });
+
+    it('should include status and detail in EmbeddingError', async () => {
+      mockFetch.mockResolvedValueOnce(errorResponse(400, 'Batch size too large'));
+
+      try {
+        await provider.generate('test');
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(EmbeddingError);
+        const e = err as EmbeddingError;
+        expect(e.details?.status).toBe(400);
+        expect(e.details?.detail).toBe('Batch size too large');
+        expect(e.details?.provider).toBe('voyage');
+      }
+    });
+
+    it('should retry on transient errors (500, 502, 503, 504)', async () => {
+      mockFetch
+        .mockResolvedValueOnce(errorResponse(500, 'Server error'))
+        .mockResolvedValueOnce(voyageResponse([[0.1, 0.2]]));
+
+      const result = await provider.generate('test');
+      expect(result).toEqual([0.1, 0.2]);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    }, 15_000);
+
+    it('should retry on 429 rate limit', async () => {
+      mockFetch
+        .mockResolvedValueOnce(errorResponse(429, 'Rate limit exceeded'))
+        .mockResolvedValueOnce(voyageResponse([[0.1]]));
+
+      const result = await provider.generate('test');
+      expect(result).toEqual([0.1]);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    }, 15_000);
+
+    it('should throw after max retries exhausted', async () => {
+      mockFetch
+        .mockResolvedValueOnce(errorResponse(500, 'Server error'))
+        .mockResolvedValueOnce(errorResponse(500, 'Server error'))
+        .mockResolvedValueOnce(errorResponse(500, 'Server error'));
+
+      try {
+        await provider.generate('test');
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(EmbeddingError);
+        const e = err as EmbeddingError;
+        expect(e.details?.status).toBe(500);
+        expect(e.details?.attempts).toBe(3);
+        expect(e.details?.retryable).toBe(true);
+      }
+    }, 15_000);
+
+    it('should throw EmbeddingError on network failure', async () => {
+      mockFetch.mockRejectedValue(new Error('DNS resolution failed'));
+
+      try {
+        await provider.generate('test');
+        expect.fail('should have thrown');
+      } catch (err) {
+        expect(err).toBeInstanceOf(EmbeddingError);
+        expect((err as Error).message).toContain('network error');
+      }
+    }, 15_000);
   });
 
   describe('generateBatch', () => {
