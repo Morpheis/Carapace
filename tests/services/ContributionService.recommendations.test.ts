@@ -36,7 +36,6 @@ describe('ContributionService — recommendations', () => {
       display_name: 'TestAgent',
       description: null,
       trust_score: 0.5,
-      created_at: new Date().toISOString(),
     });
   });
 
